@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Cobros | Compañeros</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .table-container { scrollbar-width: thin; }
+        .row-pagado { opacity: 0.6; background-color: #f8fafc; }
+    </style>
+</head>
+<body class="bg-[#f3f4f6] min-h-screen text-slate-800">
+
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+            <div>
+                <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 flex items-center gap-3">
+                    <span class="bg-emerald-600 text-white p-2 rounded-2xl shadow-lg shadow-emerald-200">
+                        <i class="fa-solid fa-wallet"></i>
+                    </span>
+                    Cobros del Grupo
+                </h1>
+                <p class="text-slate-500 mt-1 font-medium italic">Los pagados pasan al Sector de Libres automáticamente.</p>
+            </div>
+            
+            <div id="stats" class="flex gap-4">
+                <div class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-slate-200">
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Total Pendiente</span>
+                    <span id="statPendiente" class="text-xl font-black text-red-500">$0</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Formulario -->
+        <section class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 mb-8">
+            <h2 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-user-plus text-emerald-500"></i> Nuevo Compañero
+            </h2>
+            <form id="cobroForm" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-500 ml-1">FECHA</label>
+                    <input type="date" id="fecha" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition-all" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-500 ml-1">NOMBRE</label>
+                    <input type="text" id="nombre" placeholder="¿Quién debe?" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition-all" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-500 ml-1">CONCEPTO</label>
+                    <input type="text" id="motivo" placeholder="Ej: Pizza" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition-all">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-slate-500 ml-1">TOTAL</label>
+                    <input type="number" id="total" placeholder="0" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition-all" required>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-emerald-100 transition-all active:scale-95">
+                        Agregar
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Tablas -->
+        <div class="space-y-10">
+            <!-- Pendientes -->
+            <div id="sectionPendientes">
+                <h3 class="flex items-center gap-2 text-orange-600 font-bold text-xs uppercase tracking-widest mb-4 px-1">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Pendientes de Pago
+                    <span id="badgePendientes" class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-lg text-[10px] font-black">0</span>
+                </h3>
+                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50/50 border-b border-slate-100">
+                            <tr>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Compañero</th>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Motivo</th>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total</th>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pagado</th>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Faltante</th>
+                                <th class="p-4 text-center"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaPendientes" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Sector Libres -->
+            <div id="sectionLibres">
+                <h3 class="flex items-center gap-2 text-emerald-600 font-bold text-xs uppercase tracking-widest mb-4 px-1">
+                    <i class="fa-solid fa-circle-check"></i> Sector de Libres (Pagados)
+                    <span id="badgeLibres" class="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-lg text-[10px] font-black">0</span>
+                </h3>
+                <div class="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm overflow-x-auto opacity-75">
+                    <table class="w-full text-left">
+                        <thead class="bg-slate-50/50 border-b border-slate-100">
+                            <tr>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Fecha</th>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Compañero</th>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">Motivo</th>
+                                <th class="p-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">Estado</th>
+                                <th class="p-4 text-center"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaLibres" class="divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let datos = JSON.parse(localStorage.getItem('app_cobros_v1')) || [];
+        const form = document.getElementById('cobroForm');
+        document.getElementById('fecha').valueAsDate = new Date();
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const nuevo = {
+                id: Date.now(),
+                fecha: document.getElementById('fecha').value,
+                nombre: document.getElementById('nombre').value,
+                motivo: document.getElementById('motivo').value || 'Varios',
+                total: parseFloat(document.getElementById('total').value),
+                pagado: 0
+            };
+            datos.push(nuevo);
+            guardarYRender();
+            form.reset();
+            document.getElementById('fecha').valueAsDate = new Date();
+        });
+
+        function actualizarPago(id, valor) {
+            const index = datos.findIndex(d => d.id === id);
+            if (index !== -1) {
+                datos[index].pagado = parseFloat(valor) || 0;
+                guardarYRender();
+            }
+        }
+
+        function borrar(id) {
+            datos = datos.filter(d => d.id !== id);
+            guardarYRender();
+        }
+
+        function guardarYRender() {
+            localStorage.setItem('app_cobros_v1', JSON.stringify(datos));
+            render();
+        }
+
+        function format(n) {
+            return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(n);
+        }
+
+        function render() {
+            const pendientesList = document.getElementById('listaPendientes');
+            const libresList = document.getElementById('listaLibres');
+            pendientesList.innerHTML = '';
+            libresList.innerHTML = '';
+
+            const pendientes = datos.filter(d => (d.total - d.pagado) > 0);
+            const libres = datos.filter(d => (d.total - d.pagado) <= 0);
+
+            // Ordenamiento pedido: Fecha antigua primero, luego monto deuda mayor
+            pendientes.sort((a, b) => {
+                if (a.fecha !== b.fecha) return new Date(a.fecha) - new Date(b.fecha);
+                return (b.total - b.pagado) - (a.total - a.pagado);
+            });
+            libres.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+
+            let sumaPendiente = 0;
+
+            pendientes.forEach(d => {
+                const deuda = d.total - d.pagado;
+                sumaPendiente += deuda;
+                pendientesList.innerHTML += `
+                    <tr class="hover:bg-slate-50/50 transition-all">
+                        <td class="p-4 text-[11px] font-bold text-slate-400 whitespace-nowrap"><i class="fa-regular fa-calendar-days mr-1"></i> ${d.fecha}</td>
+                        <td class="p-4 font-bold text-slate-800">${d.nombre}</td>
+                        <td class="p-4 text-slate-500 text-sm italic">${d.motivo}</td>
+                        <td class="p-4 text-slate-800 font-medium">${format(d.total)}</td>
+                        <td class="p-4">
+                            <input type="number" value="${d.pagado}" onchange="actualizarPago(${d.id}, this.value)" 
+                                   class="w-24 p-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none focus:ring-2 focus:ring-emerald-500">
+                        </td>
+                        <td class="p-4 text-red-500 font-black">${format(deuda)}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="borrar(${d.id})" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            libres.forEach(d => {
+                libresList.innerHTML += `
+                    <tr class="row-pagado">
+                        <td class="p-4 text-[11px] font-bold text-slate-400">${d.fecha}</td>
+                        <td class="p-4 font-bold text-slate-800">${d.nombre}</td>
+                        <td class="p-4 text-slate-500 text-sm">${d.motivo}</td>
+                        <td class="p-4 text-center">
+                            <span class="bg-emerald-100 text-emerald-700 text-[10px] font-black px-3 py-1 rounded-full"><i class="fa-solid fa-check"></i> PAGADO TOTAL</span>
+                        </td>
+                        <td class="p-4 text-center">
+                            <button onclick="borrar(${d.id})" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can text-sm"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('statPendiente').innerText = format(sumaPendiente);
+            document.getElementById('badgePendientes').innerText = pendientes.length;
+            document.getElementById('badgeLibres').innerText = libres.length;
+        }
+
+        render();
+    </script>
+</body>
+</html>
